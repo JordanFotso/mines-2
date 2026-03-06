@@ -29,12 +29,12 @@ public class App extends Application {
 
         // 4. Créer la scène
         Scene scene = new Scene(gameView);
+        primaryStage.setScene(scene);
 
         // 5. Initialiser le contrôleur
         new GameController(board, gameView, primaryStage);
 
         // 6. Configurer et afficher
-        primaryStage.setScene(scene);
         primaryStage.setTitle(TITLE);
         primaryStage.setWidth(WIDTH);
         primaryStage.setHeight(HEIGHT);

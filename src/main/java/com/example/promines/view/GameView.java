@@ -6,8 +6,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
@@ -22,7 +21,7 @@ import javafx.scene.text.TextAlignment;
 import java.util.HashMap;
 import java.util.Map;
 
-public class GameView extends HBox {
+public class GameView extends VBox {
     private final Canvas canvas;
     private final Pane boardWrapper;
     private double cellW, cellH; 
@@ -31,27 +30,52 @@ public class GameView extends HBox {
     private final Label minesLabel;
     private final Label statusLabel;
     private final Button resetButton;
+    
+    // Menu items
+    private final MenuItem mnuNew, mnuScores, mnuQuit, mnuHelp, mnuAbout;
+    private final CheckMenuItem mnuKeyboardMode;
+
     private final Map<String, Image> imageCache = new HashMap<>();
     private Board currentBoard;
+    private int cursorX = 0, cursorY = 0; 
+    private boolean isKeyboardActive = false; 
 
-    // Couleurs pour les chiffres
     private final Color[] numColors = {
-        null, 
-        Color.web("#3498db"), // 1: Bleu
-        Color.web("#27ae60"), // 2: Vert
-        Color.web("#e74c3c"), // 3: Rouge
-        Color.web("#9b59b6"), // 4: Violet
-        Color.web("#f39c12"), // 5: Orange
-        Color.web("#1abc9c"), // 6: Turquoise
-        Color.web("#2c3e50"), // 7: Bleu nuit
-        Color.web("#7f8c8d")  // 8: Gris
+        null, Color.web("#3498db"), Color.web("#27ae60"), Color.web("#e74c3c"), 
+        Color.web("#9b59b6"), Color.web("#f39c12"), Color.web("#1abc9c"), 
+        Color.web("#2c3e50"), Color.web("#7f8c8d")
     };
 
     public GameView() {
-        this.setStyle("-fx-background-color: #121212;"); // Fond encore plus sombre
-        this.setPadding(new Insets(20));
-        this.setSpacing(20);
-        this.setAlignment(Pos.CENTER);
+        this.setStyle("-fx-background-color: #121212;");
+
+        // --- BARRE DE MENU ---
+        MenuBar menuBar = new MenuBar();
+        menuBar.setStyle("-fx-background-color: #1e1e1e;");
+        
+        Menu mnuGame = new Menu("Jeu");
+        mnuNew = new MenuItem("Nouvelle Partie");
+        mnuScores = new MenuItem("Meilleurs Scores");
+        mnuQuit = new MenuItem("Quitter");
+        mnuGame.getItems().addAll(mnuNew, new SeparatorMenuItem(), mnuScores, new SeparatorMenuItem(), mnuQuit);
+
+        Menu mnuOptions = new Menu("Options");
+        mnuKeyboardMode = new CheckMenuItem("Activer le mode clavier");
+        mnuKeyboardMode.setSelected(true); // Activé par défaut
+        mnuOptions.getItems().add(mnuKeyboardMode);
+
+        Menu mnuAide = new Menu("Aide");
+        mnuHelp = new MenuItem("Règles du jeu");
+        mnuAbout = new MenuItem("À propos");
+        mnuAide.getItems().addAll(mnuHelp, mnuAbout);
+
+        menuBar.getMenus().addAll(mnuGame, mnuOptions, mnuAide);
+
+        // --- CONTENU PRINCIPAL ---
+        HBox mainContent = new HBox(20);
+        mainContent.setPadding(new Insets(20));
+        mainContent.setAlignment(Pos.CENTER);
+        VBox.setVgrow(mainContent, Priority.ALWAYS);
 
         this.boardWrapper = new Pane();
         HBox.setHgrow(boardWrapper, Priority.ALWAYS);
@@ -87,11 +111,12 @@ public class GameView extends HBox {
 
         resetButton = new Button("NOUVELLE PARTIE");
         resetButton.setMaxWidth(Double.MAX_VALUE);
-        resetButton.setCursor(javafx.scene.Cursor.HAND);
-        resetButton.setStyle("-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 12 20; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, rgba(231,76,60,0.4), 10, 0, 0, 0);");
+        resetButton.setStyle("-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 12 20; -fx-background-radius: 10;");
         
         sidebar.getChildren().add(resetButton);
-        this.getChildren().addAll(boardWrapper, sidebar);
+        mainContent.getChildren().addAll(boardWrapper, sidebar);
+
+        this.getChildren().addAll(menuBar, mainContent);
 
         canvas.widthProperty().addListener(e -> drawBoard(currentBoard));
         canvas.heightProperty().addListener(e -> drawBoard(currentBoard));
@@ -113,6 +138,25 @@ public class GameView extends HBox {
                 drawCell(gc, board.getCell(x, y), x, y);
             }
         }
+
+        // --- SÉLECTEUR CLAVIER ---
+        if (isKeyboardActive && mnuKeyboardMode.isSelected()) {
+            gc.setStroke(Color.web("#f1c40f")); 
+            gc.setLineWidth(3);
+            gc.strokeRoundRect(cursorY * cellW + 2, cursorX * cellH + 2, cellW - 4, cellH - 4, 8, 8);
+            
+            gc.setStroke(Color.web("#f1c40f44"));
+            gc.setLineWidth(6);
+            gc.strokeRoundRect(cursorY * cellW, cursorX * cellH, cellW, cellH, 10, 10);
+        }
+    }
+
+    public void moveCursor(int dx, int dy) {
+        if (!mnuKeyboardMode.isSelected()) return;
+        isKeyboardActive = true;
+        cursorX = Math.max(0, Math.min(currentBoard.getWidth() - 1, cursorX + dx));
+        cursorY = Math.max(0, Math.min(currentBoard.getHeight() - 1, cursorY + dy));
+        drawBoard(currentBoard);
     }
 
     private void drawCell(GraphicsContext gc, Cell cell, int x, int y) {
@@ -122,53 +166,52 @@ public class GameView extends HBox {
         double sh = cellH - 2;
 
         if (!cell.isRevealed()) {
-            // --- EFFET BOMBÉ (Raised) ---
             LinearGradient gradient = new LinearGradient(0, 0, 0, 1, true, CycleMethod.NO_CYCLE,
                     new Stop(0, Color.web("#4e5a5a")),
                     new Stop(1, Color.web("#2c3e50")));
             gc.setFill(gradient);
             gc.fillRoundRect(px, py, sw, sh, 4, 4);
-
-            // Lumière (Haut/Gauche)
             gc.setStroke(Color.web("#ffffff33"));
             gc.setLineWidth(1.5);
             gc.strokeLine(px + 1, py + 1, px + sw - 1, py + 1);
             gc.strokeLine(px + 1, py + 1, px + 1, py + sh - 1);
-
-            // Ombre (Bas/Droite)
             gc.setStroke(Color.web("#00000066"));
             gc.strokeLine(px + 1, py + sh - 1, px + sw - 1, py + sh - 1);
             gc.strokeLine(px + sw - 1, py + 1, px + sw - 1, py + sh - 1);
-
             if (cell.isFlagged()) {
                 double iconSize = Math.min(sw, sh) * 0.6;
                 gc.drawImage(imageCache.get("flag"), px + (sw-iconSize)/2, py + (sh-iconSize)/2, iconSize, iconSize);
             }
         } else {
-            // --- EFFET CREUSÉ (Sunken) ---
-            gc.setFill(cell.isBomb() ? Color.web("#c0392b") : Color.web("#2c2c2c"));
-            gc.fillRoundRect(px, py, sw, sh, 2, 2);
-
-            // Ombre intérieure (Inner Shadow)
-            gc.setStroke(Color.web("#00000099"));
-            gc.setLineWidth(1);
-            gc.strokeLine(px, py, px + sw, py);
-            gc.strokeLine(px, py, px, py + sh);
-            
-            // Reflet de fond (Bas/Droite) pour renforcer l'enfoncement
-            gc.setStroke(Color.web("#ffffff11"));
-            gc.strokeLine(px, py + sh, px + sw, py + sh);
-            gc.strokeLine(px + sw, py, px + sw, py + sh);
-
             if (cell.isBomb()) {
-                double iconSize = Math.min(sw, sh) * 0.7;
+                javafx.scene.paint.RadialGradient explosion = new javafx.scene.paint.RadialGradient(0, 0, px + sw/2, py + sh/2, Math.max(sw, sh)/2, false, CycleMethod.NO_CYCLE,
+                        new Stop(0, Color.web("#ff9f43")), new Stop(0.6, Color.web("#ee5253")), new Stop(1, Color.web("#2f3542")));
+                gc.setFill(explosion);
+                gc.fillRoundRect(px, py, sw, sh, 4, 4);
+                gc.setStroke(Color.web("#1e272e"));
+                gc.setLineWidth(1.5);
+                for (int k = 0; k < 6; k++) {
+                    double angle = k * Math.PI / 3 + (x*y % 10) * 0.1;
+                    gc.strokeLine(px + sw/2, py + sh/2, px + sw/2 + Math.cos(angle) * sw/2, py + sh/2 + Math.sin(angle) * sh/2);
+                }
+                double iconSize = Math.min(sw, sh) * 0.75;
                 gc.drawImage(imageCache.get("bomb2"), px + (sw-iconSize)/2, py + (sh-iconSize)/2, iconSize, iconSize);
-            } else if (cell.getNeighborBombs() > 0) {
-                // Rendu des chiffres en texte (plus net et plus beau)
-                gc.setFill(numColors[cell.getNeighborBombs()]);
-                gc.setFont(Font.font("Segoe UI", FontWeight.BOLD, Math.min(sw, sh) * 0.7));
-                gc.setTextAlign(TextAlignment.CENTER);
-                gc.fillText(String.valueOf(cell.getNeighborBombs()), px + sw/2, py + sh*0.75);
+            } else {
+                gc.setFill(Color.web("#2c2c2c"));
+                gc.fillRoundRect(px, py, sw, sh, 2, 2);
+                gc.setStroke(Color.web("#00000099"));
+                gc.setLineWidth(1);
+                gc.strokeLine(px, py, px + sw, py);
+                gc.strokeLine(px, py, px, py + sh);
+                gc.setStroke(Color.web("#ffffff11"));
+                gc.strokeLine(px, py + sh, px + sw, py + sh);
+                gc.strokeLine(px + sw, py, px + sw, py + sh);
+                if (cell.getNeighborBombs() > 0) {
+                    gc.setFill(numColors[cell.getNeighborBombs()]);
+                    gc.setFont(Font.font("Segoe UI", FontWeight.BOLD, Math.min(sw, sh) * 0.7));
+                    gc.setTextAlign(TextAlignment.CENTER);
+                    gc.fillText(String.valueOf(cell.getNeighborBombs()), px + sw/2, py + sh*0.75);
+                }
             }
         }
     }
@@ -178,7 +221,6 @@ public class GameView extends HBox {
         card.setPadding(new Insets(12));
         card.setStyle("-fx-background-color: #2a2a2a; -fx-background-radius: 15; -fx-border-color: #333;");
         card.setAlignment(Pos.CENTER);
-        
         HBox header = new HBox(8);
         header.setAlignment(Pos.CENTER_LEFT);
         try {
@@ -187,16 +229,13 @@ public class GameView extends HBox {
             iv.setFitWidth(18); iv.setFitHeight(18);
             header.getChildren().add(iv);
         } catch (Exception e) {}
-        
         Label titleLabel = new Label(title);
         titleLabel.setTextFill(Color.web("#888"));
         titleLabel.setFont(Font.font("System", FontWeight.BOLD, 11));
         header.getChildren().add(titleLabel);
-
         Label valueLabel = new Label(initialValue);
         valueLabel.setTextFill(Color.WHITE);
         valueLabel.setFont(Font.font("Monospaced", FontWeight.BOLD, 24));
-
         card.getChildren().addAll(header, valueLabel);
         parent.getChildren().add(card);
         return valueLabel;
@@ -214,9 +253,21 @@ public class GameView extends HBox {
     public Canvas getCanvas() { return canvas; }
     public double getCellW() { return cellW; }
     public double getCellH() { return cellH; }
+    public int getCursorX() { return cursorX; }
+    public int getCursorY() { return cursorY; }
+    public void setKeyboardActive(boolean active) { 
+        this.isKeyboardActive = active; 
+        drawBoard(currentBoard);
+    }
     public Label getTimerLabel() { return timerLabel; }
     public Label getFlagsLabel() { return flagsLabel; }
     public Label getMinesLabel() { return minesLabel; }
     public Label getStatusLabel() { return statusLabel; }
     public Button getResetButton() { return resetButton; }
+    public MenuItem getMnuNew() { return mnuNew; }
+    public MenuItem getMnuScores() { return mnuScores; }
+    public MenuItem getMnuQuit() { return mnuQuit; }
+    public MenuItem getMnuHelp() { return mnuHelp; }
+    public MenuItem getMnuAbout() { return mnuAbout; }
+    public CheckMenuItem getMnuKeyboardMode() { return mnuKeyboardMode; }
 }

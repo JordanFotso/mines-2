@@ -50,10 +50,16 @@ public class GameController {
                 case LEFT:  gameView.moveCursor(0, -1); break;
                 case RIGHT: gameView.moveCursor(0, 1);  break;
                 case SPACE:
+                    int curX = gameView.getCursorX();
+                    int curY = gameView.getCursorY();
                     if (event.isControlDown()) {
-                        board.toggleFlag(gameView.getCursorX(), gameView.getCursorY());
+                        board.toggleFlag(curX, curY);
                     } else {
-                        board.revealCell(gameView.getCursorX(), gameView.getCursorY());
+                        if (board.getCell(curX, curY).isRevealed()) {
+                            board.chordCell(curX, curY);
+                        } else {
+                            board.revealCell(curX, curY);
+                        }
                     }
                     updateDisplay();
                     checkGameStatus();
@@ -100,8 +106,13 @@ public class GameController {
             int x = (int) (event.getY() / cellH);
 
             if (x >= 0 && x < board.getWidth() && y >= 0 && y < board.getHeight()) {
+                Cell clickedCell = board.getCell(x, y);
                 if (event.getButton() == MouseButton.PRIMARY) {
-                    board.revealCell(x, y);
+                    if (clickedCell.isRevealed()) {
+                        board.chordCell(x, y);
+                    } else {
+                        board.revealCell(x, y);
+                    }
                 } else if (event.getButton() == MouseButton.SECONDARY) {
                     board.toggleFlag(x, y);
                 }

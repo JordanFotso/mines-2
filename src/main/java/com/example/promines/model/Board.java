@@ -96,6 +96,41 @@ public class Board {
         else flaggedCount--;
     }
 
+    public void chordCell(int x, int y) {
+        Cell cell = cells[x][y];
+        if (!cell.isRevealed() || cell.isBomb() || isGameOver) return;
+
+        int flagsAround = countFlagsAround(x, y);
+        if (flagsAround == cell.getNeighborBombs()) {
+            for (int i = -1; i <= 1; i++) {
+                for (int j = -1; j <= 1; j++) {
+                    int nx = x + i;
+                    int ny = y + j;
+                    if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                        Cell neighbor = cells[nx][ny];
+                        if (!neighbor.isRevealed() && !neighbor.isFlagged()) {
+                            revealCell(nx, ny);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private int countFlagsAround(int x, int y) {
+        int count = 0;
+        for (int i = -1; i <= 1; i++) {
+            for (int j = -1; j <= 1; j++) {
+                int nx = x + i;
+                int ny = y + j;
+                if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                    if (cells[nx][ny].isFlagged()) count++;
+                }
+            }
+        }
+        return count;
+    }
+
     // Getters
     public int getWidth() { return width; }
     public int getHeight() { return height; }

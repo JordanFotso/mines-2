@@ -4,7 +4,7 @@ Un projet de jeu de Démineur classique réalisé en **Java** avec la bibliothè
 
 ---
 
-## 🏗️ Architecture du Projet
+##  Architecture du Projet
 
 Le code est structuré selon le design pattern **MVC**, garantissant une séparation claire des responsabilités :
 
@@ -20,17 +20,17 @@ Le code est structuré selon le design pattern **MVC**, garantissant une sépara
 
 ---
 
-## ✨ Fonctionnalités
+## Fonctionnalités
 
-- ✅ **Mécaniques classiques** : Révélation de cases, pose de drapeaux (clic droit) et détection automatique des mines.
-- ✅ **Chronomètre de précision** : Affichage dynamique du temps écoulé au centième de seconde.
-- ✅ **Algorithme Flood-Fill** : Révélation récursive automatique des zones vides adjacentes.
-- ✅ **Système de réinitialisation** : Bouton permettant de relancer une nouvelle partie avec une grille fraîchement générée.
-- ✅ **Interface Responsive** : Layout flexible géré par des contraintes de lignes et de colonnes (`GridPane`).
+-  **Mécaniques classiques** : Révélation de cases, pose de drapeaux (clic droit) et détection automatique des mines.
+-  **Chronomètre de précision** : Affichage dynamique du temps écoulé au centième de seconde.
+-  **Algorithme Flood-Fill** : Révélation récursive automatique des zones vides adjacentes.
+-  **Système de réinitialisation** : Bouton permettant de relancer une nouvelle partie avec une grille fraîchement générée.
+-  **Interface Responsive** : Layout flexible géré par des contraintes de lignes et de colonnes (`GridPane`).
 
 ---
 
-## 🛠️ Technologies & Outils
+##  Technologies & Outils
 
 - **Langage** : Java 22
 - **Interface Graphique** : JavaFX 22
@@ -40,7 +40,7 @@ Le code est structuré selon le design pattern **MVC**, garantissant une sépara
 
 ---
 
-## 🚀 Installation et Lancement
+##  Installation et Lancement
 
 ### Prérequis
 - Java JDK 22 ou supérieur.
@@ -65,7 +65,7 @@ Le code est structuré selon le design pattern **MVC**, garantissant une sépara
 
 ---
 
-## 📸 Aperçu visuel
+## Aperçu visuel
 
 Les ressources graphiques (bombes, chiffres, drapeaux) sont situées dans le dossier `src/main/resources/images`. L'interface utilise une palette de couleurs sombre et moderne.
 

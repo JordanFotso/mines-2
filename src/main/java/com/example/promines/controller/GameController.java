@@ -23,38 +23,40 @@ public class GameController {
         this.primaryStage = primaryStage;
         
         initHandlers();
-        updateAllViews();
+        updateDisplay();
         startTimer();
     }
 
     private void initHandlers() {
-        for (int x = 0; x < board.getWidth(); x++) {
-            for (int y = 0; y < board.getHeight(); y++) {
-                final int fx = x;
-                final int fy = y;
-                gameView.getCellView(x, y).setOnMouseClicked(event -> {
-                    if (board.isGameOver()) return;
+        // Un seul écouteur pour tout le plateau (Canvas)
+        gameView.getCanvas().setOnMouseClicked(event -> {
+            if (board.isGameOver()) return;
 
-                    if (event.getButton() == MouseButton.PRIMARY) {
-                        board.revealCell(fx, fy);
-                    } else if (event.getButton() == MouseButton.SECONDARY) {
-                        board.toggleFlag(fx, fy);
-                    }
-                    updateAllViews();
-                    checkGameStatus();
-                });
+            // Calcul de la case cliquée
+            int cellSize = gameView.getCellSize();
+            int y = (int) (event.getX() / cellSize);
+            int x = (int) (event.getY() / cellSize);
+
+            // Vérification des limites
+            if (x >= 0 && x < board.getWidth() && y >= 0 && y < board.getHeight()) {
+                if (event.getButton() == MouseButton.PRIMARY) {
+                    board.revealCell(x, y);
+                } else if (event.getButton() == MouseButton.SECONDARY) {
+                    board.toggleFlag(x, y);
+                }
+                updateDisplay();
+                checkGameStatus();
             }
-        }
+        });
 
         gameView.getResetButton().setOnAction(e -> resetGame());
     }
 
-    private void updateAllViews() {
-        for (int x = 0; x < board.getWidth(); x++) {
-            for (int y = 0; y < board.getHeight(); y++) {
-                gameView.getCellView(x, y).update(board.getCell(x, y));
-            }
-        }
+    private void updateDisplay() {
+        // On demande au Canvas de tout redessiner
+        gameView.drawBoard(board);
+        
+        // Mise à jour des labels
         gameView.getFlagsLabel().setText(String.format("%02d", board.getFlaggedCount()));
         gameView.getMinesLabel().setText(String.valueOf(board.getTotalMines()));
     }
@@ -64,6 +66,7 @@ public class GameController {
             gameView.getStatusLabel().setText("BOOM !");
             timeline.stop();
             revealAllMines();
+            updateDisplay();
         } else if (checkWin()) {
             gameView.getStatusLabel().setText("GAGNÉ !");
             timeline.stop();
@@ -71,7 +74,6 @@ public class GameController {
     }
 
     private boolean checkWin() {
-        // Simple win condition: all non-bomb cells are revealed
         for (int x = 0; x < board.getWidth(); x++) {
             for (int y = 0; y < board.getHeight(); y++) {
                 Cell cell = board.getCell(x, y);
@@ -87,7 +89,6 @@ public class GameController {
                 Cell cell = board.getCell(x, y);
                 if (cell.isBomb()) {
                     cell.setRevealed(true);
-                    gameView.getCellView(x, y).update(cell);
                 }
             }
         }
@@ -107,7 +108,6 @@ public class GameController {
 
     private void resetGame() {
         if (timeline != null) timeline.stop();
-        // Pour réinitialiser, on peut simplement relancer l'application ou recréer les objets
         Board newBoard = new Board(25, 17, 50);
         GameView newView = new GameView(25, 17);
         primaryStage.getScene().setRoot(newView);

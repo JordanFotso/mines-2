@@ -22,6 +22,7 @@ public class GameController {
         this.gameView = gameView;
         this.primaryStage = primaryStage;
         
+        gameView.drawBoard(board); // Définit le currentBoard dans la vue
         initHandlers();
         updateDisplay();
         startTimer();
@@ -32,10 +33,11 @@ public class GameController {
         gameView.getCanvas().setOnMouseClicked(event -> {
             if (board.isGameOver()) return;
 
-            // Calcul de la case cliquée
-            int cellSize = gameView.getCellSize();
-            int y = (int) (event.getX() / cellSize);
-            int x = (int) (event.getY() / cellSize);
+            // Calcul de la case cliquée avec les dimensions dynamiques
+            double cellW = gameView.getCellW();
+            double cellH = gameView.getCellH();
+            int y = (int) (event.getX() / cellW);
+            int x = (int) (event.getY() / cellH);
 
             // Vérification des limites
             if (x >= 0 && x < board.getWidth() && y >= 0 && y < board.getHeight()) {
@@ -108,8 +110,8 @@ public class GameController {
 
     private void resetGame() {
         if (timeline != null) timeline.stop();
-        Board newBoard = new Board(25, 17, 50);
-        GameView newView = new GameView(25, 17);
+        Board newBoard = new Board(22, 24, (22*24)/6);
+        GameView newView = new GameView();
         primaryStage.getScene().setRoot(newView);
         new GameController(newBoard, newView, primaryStage);
     }
